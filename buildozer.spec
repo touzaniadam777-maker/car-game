@@ -7,7 +7,7 @@ package.domain = org.test
 source.dir = .
 source.include_exts = py,png,jpg
 
-requirements = python3,pygame
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 1
