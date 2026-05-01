@@ -1,84 +1,66 @@
-import pygame
-import random
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
 
-pygame.init()
+class StoreApp(App):
+    def build(self):
+        self.money = 100
+        self.inventory = {}
 
-# الشاشة
-width, height = 400, 600
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Car Game")
+        self.store = {
+            "تفاح": 5,
+            "خبز": 3,
+            "حليب": 7,
+            "شوكولا": 10
+        }
 
-# ألوان
-white = (255,255,255)
-blue = (0,0,255)
-red = (255,0,0)
-gray = (100,100,100)
+        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
-# اللاعب
-player = pygame.Rect(180, 500, 40, 60)
+        self.money_label = Label(text=f"💰 فلوسك: {self.money}", font_size=24)
+        self.layout.add_widget(self.money_label)
 
-# أزرار
-left_btn = pygame.Rect(50, 520, 100, 60)
-right_btn = pygame.Rect(250, 520, 100, 60)
+        self.info_label = Label(text="مرحبا في متجرك!", font_size=18)
+        self.layout.add_widget(self.info_label)
 
-# سيارات
-cars = []
-speed = 5
+        # أزرار الشراء
+        for item, price in self.store.items():
+            btn = Button(text=f"شراء {item} ({price})", size_hint=(1, 0.2))
+            btn.bind(on_press=self.buy_item)
+            self.layout.add_widget(btn)
 
-clock = pygame.time.Clock()
+        # زر عرض المخزون
+        inv_btn = Button(text="📦 عرض المخزون", size_hint=(1, 0.2))
+        inv_btn.bind(on_press=self.show_inventory)
+        self.layout.add_widget(inv_btn)
 
-running = True
-while running:
-    screen.fill((0,0,0))
+        return self.layout
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    def buy_item(self, instance):
+        text = instance.text.split(" ")
+        item = text[1]
 
-        # 👆 الضغط على الأزرار
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if left_btn.collidepoint(event.pos):
-                player.x -= 30
-            if right_btn.collidepoint(event.pos):
-                player.x += 30
+        price = self.store[item]
 
-    # حدود الحركة
-    if player.x < 0:
-        player.x = 0
-    if player.x > width - 40:
-        player.x = width - 40
+        if self.money >= price:
+            self.money -= price
+            self.inventory[item] = self.inventory.get(item, 0) + 1
+            self.info_label.text = f"✅ اشتريت {item}"
+        else:
+            self.info_label.text = "❌ ما عندك فلوس"
 
-    # إنشاء سيارات
-    if random.randint(1, 20) == 1:
-        cars.append(pygame.Rect(random.randint(0, 360), -60, 40, 60))
+        self.update_money()
 
-    # تحريك السيارات
-    for car in cars:
-        car.y += speed
+    def show_inventory(self, instance):
+        if not self.inventory:
+            self.info_label.text = "📦 المخزون فارغ"
+        else:
+            items = ", ".join([f"{k} x{v}" for k, v in self.inventory.items()])
+            self.info_label.text = f"📦 {items}"
 
-        if car.colliderect(player):
-            print("💥 GAME OVER")
-            running = False
+    def update_money(self):
+        self.money_label.text = f"💰 فلوسك: {self.money}"
 
-    cars = [c for c in cars if c.y < height]
 
-    # رسم اللاعب
-    pygame.draw.rect(screen, blue, player)
-
-    # رسم السيارات
-    for car in cars:
-        pygame.draw.rect(screen, red, car)
-
-    # رسم الأزرار
-    pygame.draw.rect(screen, gray, left_btn)
-    pygame.draw.rect(screen, gray, right_btn)
-
-    # كتابة النص
-    font = pygame.font.SysFont(None, 30)
-    screen.blit(font.render("LEFT", True, white), (75, 540))
-    screen.blit(font.render("RIGHT", True, white), (265, 540))
-
-    pygame.display.update()
-    clock.tick(60)
-
-pygame.quit()
+if __name__ == "__main__":
+    StoreApp().run()
